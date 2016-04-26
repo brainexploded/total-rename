@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+NUM_ARGS=2
+
+OLD=$1
+NEW=$2
+BASEDIR=${PWD###/*}
+EXCLUDE='--exclude-dir=.git';
+
+if [ $# -ne $NUM_ARGS ]
+then
+	echo "usage: `basename $0` old new"
+	exit 1
+fi
+
+read -p "Rename all occurences of $OLD to $NEW in $BASEDIR? " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
+function do_rename()
+{
+	old=$1
+	new=$2
+	
+	echo "changing $old to $new in $BASEDIR"
+	echo "there is `grep -owr $old $EXCLUDE $BASEDIR | wc -l` occurences of $old"
+
+	grep -rl $old $EXCLUDE $BASEDIR | xargs sed -i s/$old/$new/g
+	find $BASEDIR -depth -name "*$old*" -exec rename 's/'$old'([^\/]*)$/'$new'$1/' '{}' \;
+}
+
+do_rename $OLD $NEW
+do_rename ${OLD^} ${NEW^}
+do_rename ${OLD^^} ${NEW^^}
+
